@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Académico - CSS Simple</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            padding: 8px;
+            width: 100%;
+            max-width: 300px;
+            border: 1px solid #999;
+        }
+        .btn {
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .btn-primary { background: #4CAF50; color: white; border: none; }
+        .btn-secondary { background: #2196F3; color: white; border: none; }
+        .btn-danger { background: #f44336; color: white; border: none; }
+        .btn-warning { background: #FF9800; color: white; border: none; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        th { background: #4CAF50; color: white; }
+        .badge {
+            padding: 3px 8px;
+            border-radius: 3px;
+            color: white;
+            font-size: 12px;
+        }
+        .badge-alumno { background: #2196F3; }
+        .badge-docente { background: #9C27B0; }
+        .alumno-fields, .docente-fields {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+        }
+        .alumno-fields.show, .docente-fields.show {
+            display: block;
+        }
+        .message {
+            padding: 10px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        .message.success { background: #d4edda; display: block; }
+        .message.error { background: #f8d7da; display: block; }
+    </style>
+</head>
+<body>
+    <h1>Registro Académico</h1>
+
+    <!-- Formulario -->
+    <div class="card">
+        <h2>Registrar Usuario</h2>
+        <div id="message" class="message"></div>
+
+        <form id="userForm">
+            <div class="form-group">
+                <label>Nombre:</label>
+                <input type="text" id="nombre" required>
+            </div>
+            <div class="form-group">
+                <label>Matrícula:</label>
+                <input type="text" id="matricula" required>
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label>Tipo:</label>
+                <select id="tipo" required onchange="mostrarCamposTipo()">
+                    <option value="">Seleccione...</option>
+                    <option value="alumno">Alumno</option>
+                    <option value="docente">Docente</option>
+                </select>
+            </div>
+
+            <div id="alumnoFields" class="alumno-fields">
+                <h3>Datos del Alumno</h3>
+                <div class="form-group">
+                    <label>Materia:</label>
+                    <input type="text" id="materiaAlumno">
+                </div>
+                <div class="form-group">
+                    <label>Calificaciones:</label>
+                    <div id="calificacionesContainer">
+                        <input type="number" class="calificacion" placeholder="Nota" min="1" max="7" step="0.1">
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="addCalificacion()">+ Agregar Nota</button>
+                </div>
+            </div>
+
+            <div id="docenteFields" class="docente-fields">
+                <h3>Datos del Docente</h3>
+                <div class="form-group">
+                    <label>Materia:</label>
+                    <input type="text" id="materiaDocente">
+                </div>
+                <div class="form-group">
+                    <label>Horario:</label>
+                    <input type="text" id="horario">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="button" class="btn btn-secondary" onclick="limpiarFormulario()">Limpiar</button>
+        </form>
+    </div>
+
+    <!-- Lista -->
+    <div class="card">
+        <h2>Usuarios Registrados</h2>
+        <div>
+            <button class="btn btn-secondary" onclick="filtrarUsuarios('todos')">Todos</button>
+            <button class="btn btn-primary" onclick="filtrarUsuarios('alumno')">Alumnos</button>
+            <button class="btn btn-warning" onclick="filtrarUsuarios('docente')">Docentes</button>
+            <button class="btn btn-danger" onclick="limpiarStorage()">Borrar Todo</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Nombre</th>
+                    <th>Matrícula</th>
+                    <th>Email</th>
+                    <th>Detalles</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // HERENCIA
+        // Usuario (clase padre) -> Alumno, Docente (clases hijos)
+
+        // Clase base: datos comunes a todos los usuarios
+        class Usuario {
+            constructor(nombre, matricula, email) {
+                this.nombre = nombre;
+                this.matricula = matricula;
+                this.email = email;
+                this.fechaRegistro = new Date().toISOString();
+            }
+            getDatosBasicos() {
+                return { nombre: this.nombre, matricula: this.matricula, email: this.email };
+            }
+        }
+
+        // Clase Alumno: hereda de Usuario + agrega materia y calificaciones
+        class Alumno extends Usuario {
+            constructor(nombre, matricula, email, materia = '', calificaciones = []) {
+                super(nombre, matricula, email);  // Llama al constructor de Usuario
+                this.materia = materia;
+                this.calificaciones = calificaciones;
+            }
+            getPromedio() {
+                if (this.calificaciones.length === 0) return 0;
+                return (this.calificaciones.reduce((a, b) => a + b, 0) / this.calificaciones.length).toFixed(2);
+            }
+            getDatosCompletos() {
+                return { ...this.getDatosBasicos(), tipo: 'alumno', materia: this.materia, calificaciones: this.calificaciones, promedio: this.getPromedio() };
+            }
+        }
+
+        // Clase Docente: hereda de Usuario + agrega materia y horario
+        class Docente extends Usuario {
+            constructor(nombre, matricula, email, materia = '', horario = '') {
+                super(nombre, matricula, email);  // Llama al constructor de Usuario
+                this.materia = materia;
+                this.horario = horario;
+            }
+            getDatosCompletos() {
+                return { ...this.getDatosBasicos(), tipo: 'docente', materia: this.materia, horario: this.horario };
+            }
+        }
+
+        // LOCALSTORAGE
+        const STORAGE_KEY = 'registro_academico_simple';
+
+        function guardarEnStorage(usuarios) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(usuarios));
+        }
+
+        function cargarDesdeStorage() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+
+        // VARIABLES GLOBALES
+        let usuarios = [];
+        let editandoIndex = -1;
+
+        // FUNCIONES DE INTERFAZ
+
+        // Muestra campos adicionales según el tipo de usuario seleccionado
+        function mostrarCamposTipo() {
+            const tipo = document.getElementById('tipo').value;
+            document.getElementById('alumnoFields').classList.toggle('show', tipo === 'alumno');
+            document.getElementById('docenteFields').classList.toggle('show', tipo === 'docente');
+        }
+
+        // Agrega un nuevo campo de calificación
+        function addCalificacion() {
+            const container = document.getElementById('calificacionesContainer');
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'calificacion';
+            input.placeholder = 'Nota';
+            input.min = '1';
+            input.max = '7';
+            input.step = '0.1';
+            container.appendChild(input);
+        }
+
+        // Obtiene las calificaciones del formulario (solo las válidas entre 1 y 7)
+        function getCalificaciones() {
+            const inputs = document.querySelectorAll('.calificacion');
+            const calificaciones = [];
+            inputs.forEach(input => {
+                const nota = parseFloat(input.value);
+                if (!isNaN(nota) && nota >= 1 && nota <= 7) {
+                    calificaciones.push(nota);
+                }
+            });
+            return calificaciones;
+        }
+
+        // Muestra un mensaje temporal (éxito o error)
+        function mostrarMensaje(texto, tipo) {
+            const msg = document.getElementById('message');
+            msg.textContent = texto;
+            msg.className = 'message ' + tipo;
+            setTimeout(() => msg.className = 'message', 3000);
+        }
+
+        // Limpia el formulario y reinicia el modo edición
+        function limpiarFormulario() {
+            document.getElementById('userForm').reset();
+            document.getElementById('alumnoFields').classList.remove('show');
+            document.getElementById('docenteFields').classList.remove('show');
+            document.getElementById('calificacionesContainer').innerHTML = '<input type="number" class="calificacion" placeholder="Nota" min="1" max="7" step="0.1">';
+            editandoIndex = -1;
+            document.querySelector('button[type="submit"]').textContent = 'Guardar';
+        }
+
+        // EVENTO: GUARDAR USUARIO
+        // Se ejecuta al presionar el botón Guardar
+        document.getElementById('userForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const nombre = document.getElementById('nombre').value.trim();
+            const matricula = document.getElementById('matricula').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const tipo = document.getElementById('tipo').value;
+
+            if (!tipo) {
+                mostrarMensaje('Seleccione un tipo', 'error');
+                return;
+            }
+
+            let usuario;
+            if (tipo === 'alumno') {
+                usuario = new Alumno(nombre, matricula, email, document.getElementById('materiaAlumno').value.trim(), getCalificaciones());
+            } else {
+                usuario = new Docente(nombre, matricula, email, document.getElementById('materiaDocente').value.trim(), document.getElementById('horario').value.trim());
+            }
+
+            if (editandoIndex >= 0) {
+                usuarios[editandoIndex] = usuario.getDatosCompletos();
+                mostrarMensaje('Actualizado', 'success');
+            } else {
+                usuarios.push(usuario.getDatosCompletos());
+                mostrarMensaje('Guardado', 'success');
+            }
+
+            guardarEnStorage(usuarios);
+            mostrarUsuarios();
+            limpiarFormulario();
+        });
+
+        // FUNCIONES DE LA TABLA
+
+        // Muestra los usuarios en la tabla (con filtro opcional)
+        function mostrarUsuarios(filtro = 'todos') {
+            usuarios = cargarDesdeStorage();
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+
+            let filtrados = filtro === 'todos' ? usuarios : usuarios.filter(u => u.tipo === filtro);
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No hay usuarios</td></tr>';
+                return;
+            }
+
+            filtrados.forEach((u, i) => {
+                const badgeClass = u.tipo === 'alumno' ? 'badge-alumno' : 'badge-docente';
+                const tipoLabel = u.tipo === 'alumno' ? 'Alumno' : 'Docente';
+                const detalles = u.tipo === 'alumno' 
+                    ? `Materia: ${u.materia || 'N/A'}<br>Promedio: ${u.promedio || 0}`
+                    : `Materia: ${u.materia || 'N/A'}<br>Horario: ${u.horario || 'N/A'}`;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="badge ${badgeClass}">${tipoLabel}</span></td>
+                        <td>${u.nombre}</td>
+                        <td>${u.matricula}</td>
+                        <td>${u.email}</td>
+                        <td>${detalles}</td>
+                        <td>
+                            <button class="btn btn-warning" onclick="editarUsuario(${i})">Editar</button>
+                            <button class="btn btn-danger" onclick="eliminarUsuario(${i})">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Filtra la tabla por tipo de usuario
+        function filtrarUsuarios(tipo) {
+            mostrarUsuarios(tipo);
+        }
+
+        // Elimina un usuario
+        function eliminarUsuario(index) {
+            if (confirm('¿Eliminar usuario?')) {
+                usuarios.splice(index, 1);
+                guardarEnStorage(usuarios);
+                mostrarUsuarios();
+                mostrarMensaje('Eliminado', 'success');
+            }
+        }
+
+        // Carga los datos de un usuario en el formulario para editar
+        function editarUsuario(index) {
+            const u = usuarios[index];
+            document.getElementById('nombre').value = u.nombre;
+            document.getElementById('matricula').value = u.matricula;
+            document.getElementById('email').value = u.email;
+            document.getElementById('tipo').value = u.tipo;
+            mostrarCamposTipo();
+
+            if (u.tipo === 'alumno') {
+                document.getElementById('materiaAlumno').value = u.materia || '';
+                const container = document.getElementById('calificacionesContainer');
+                container.innerHTML = '';
+                (u.calificaciones || []).forEach(cal => {
+                    container.innerHTML += `<input type="number" class="calificacion" value="${cal}" min="1" max="7" step="0.1">`;
+                });
+            } else {
+                document.getElementById('materiaDocente').value = u.materia || '';
+                document.getElementById('horario').value = u.horario || '';
+            }
+
+            editandoIndex = index;
+            document.querySelector('button[type="submit"]').textContent = 'Actualizar';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Elimina todos los usuarios
+        function limpiarStorage() {
+            if (confirm('¿Borrar todo?')) {
+                localStorage.removeItem(STORAGE_KEY);
+                usuarios = [];
+                mostrarUsuarios();
+                mostrarMensaje('Todo borrado', 'success');
+            }
+        }
+
+        // INICIALIZACIÓN AL CARGAR LA PÁGINA
+        window.addEventListener('DOMContentLoaded', () => mostrarUsuarios());
+    </script>
+</body>
+</html>
