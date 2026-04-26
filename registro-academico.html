@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro Académico - CSS Simple</title>
+    <title>Registro Académico</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -117,7 +117,7 @@
                 <div class="form-group">
                     <label>Calificaciones:</label>
                     <div id="calificacionesContainer">
-                        <input type="number" class="calificacion" placeholder="Nota" min="1" max="7" step="0.1">
+                        <input type="number" class="calificacion" placeholder="Nota" min="1" max="10" step="0.1">
                     </div>
                     <button type="button" class="btn btn-secondary" onclick="addCalificacion()">+ Agregar Nota</button>
                 </div>
@@ -242,18 +242,18 @@
             input.className = 'calificacion';
             input.placeholder = 'Nota';
             input.min = '1';
-            input.max = '7';
+            input.max = '10';
             input.step = '0.1';
             container.appendChild(input);
         }
 
-        // Obtiene las calificaciones del formulario (solo las válidas entre 1 y 7)
+        // Obtiene las calificaciones del formulario (solo las válidas entre 1 y 10)
         function getCalificaciones() {
             const inputs = document.querySelectorAll('.calificacion');
             const calificaciones = [];
             inputs.forEach(input => {
                 const nota = parseFloat(input.value);
-                if (!isNaN(nota) && nota >= 1 && nota <= 7) {
+                if (!isNaN(nota) && nota >= 1 && nota <= 10) {
                     calificaciones.push(nota);
                 }
             });
@@ -273,7 +273,7 @@
             document.getElementById('userForm').reset();
             document.getElementById('alumnoFields').classList.remove('show');
             document.getElementById('docenteFields').classList.remove('show');
-            document.getElementById('calificacionesContainer').innerHTML = '<input type="number" class="calificacion" placeholder="Nota" min="1" max="7" step="0.1">';
+            document.getElementById('calificacionesContainer').innerHTML = '<input type="number" class="calificacion" placeholder="Nota" min="1" max="10" step="0.1">';
             editandoIndex = -1;
             document.querySelector('button[type="submit"]').textContent = 'Guardar';
         }
@@ -380,7 +380,7 @@
                 const container = document.getElementById('calificacionesContainer');
                 container.innerHTML = '';
                 (u.calificaciones || []).forEach(cal => {
-                    container.innerHTML += `<input type="number" class="calificacion" value="${cal}" min="1" max="7" step="0.1">`;
+                    container.innerHTML += `<input type="number" class="calificacion" value="${cal}" min="1" max="10" step="0.1">`;
                 });
             } else {
                 document.getElementById('materiaDocente').value = u.materia || '';
