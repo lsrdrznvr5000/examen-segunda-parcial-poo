@@ -237,6 +237,14 @@
         // Agrega un nuevo campo de calificación
         function addCalificacion() {
             const container = document.getElementById('calificacionesContainer');
+            const inputs = container.querySelectorAll('.calificacion');
+            
+            // Máximo 3 calificaciones
+            if (inputs.length >= 3) {
+                mostrarMensaje('Máximo 3 calificaciones permitidas', 'error');
+                return;
+            }
+
             const input = document.createElement('input');
             input.type = 'number';
             input.className = 'calificacion';
@@ -245,6 +253,17 @@
             input.max = '10';
             input.step = '0.1';
             container.appendChild(input);
+            actualizarBotonAgregar();
+        }
+
+        // Actualiza el estado del botón según la cantidad de notas
+        function actualizarBotonAgregar() {
+            const container = document.getElementById('calificacionesContainer');
+            const inputs = container.querySelectorAll('.calificacion');
+            const btn = document.querySelector('button[onclick="addCalificacion()"]');
+            if (btn) {
+                btn.disabled = inputs.length >= 3;
+            }
         }
 
         // Obtiene las calificaciones del formulario (solo las válidas entre 1 y 10)
